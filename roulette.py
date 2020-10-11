@@ -16,7 +16,7 @@ import json
 
 
 class Roulette:
-    def __init__(self):
+    def __init__(self, starting_money):
         self.wheel = {
             -1: {"color": "green"},
             0: {"color": "green"},
@@ -59,8 +59,21 @@ class Roulette:
         }
 
         self.payout = {"straight": 35, "color": 1, "parity": 1}
-
+        self.total_money = starting_money
         self.results = []
+        self.results_df = pd.DataFrame(
+            columns=[
+                "roll",
+                "type",
+                "choice",
+                "amount",
+                "win",
+                "money",
+                "total_wins",
+                "total_losses",
+                "total_money",
+            ]
+        )
 
         for num in self.wheel:
             if num <= 0:
@@ -70,23 +83,67 @@ class Roulette:
             elif num % 2 == 1:
                 self.wheel[num]["parity"] = "odd"
 
+    @property
+    def total_wins(self):
+        return sum(1 for result in self.results if result["win"])
+
+    @property
+    def total_losses(self):
+        return sum(1 for result in self.results if not result["win"])
+
+    @property
+    def total_losses(self):
+        return sum(1 for result in self.results if not result["win"])
+
     @staticmethod
     def roll():
         return randint(-1, 37)
 
-    def bet(self, type, choice):
-        result = self.roll()
+    def bet(self, type, choice, amount):
+        roll = self.roll()
         win = False
         if type == "straight":
-            if choice == result:
+            if choice == roll:
                 win = True
-        if type in ["color", "parity"]:
-            if choice == self.wheel[result][type]:
+        elif type in ["color", "parity"]:
+            if choice == self.wheel[roll][type]:
                 win = True
         else:
             print(
                 "I don't understand that bet. Please choose one of the following bets: \nstraight\ncolor\nparity"
             )
             return False
-        return (result,)
+
+        if win:
+            money = amount * self.payout[type]
+        elif not win:
+            money = -amount
+
+        self.total_money = self.total_money + money
+
+        result = {
+            "roll": roll,
+            "type": type,
+            "choice": choice,
+            "amount": amount,
+            "win": win,
+            "money": money,
+        }
+
+        data = {
+            "roll": roll,
+            "type": type,
+            "choice": choice,
+            "amount": amount,
+            "win": win,
+            "money": money,
+            "total_wins": self.total_wins,
+            "total_losses": self.total_losses,
+            "total_money": self.total_money,
+        }
+
+        self.results.append(result)
+        self.results_df = self.results_df.append(data, ignore_index=True)
+
+        return result
 
