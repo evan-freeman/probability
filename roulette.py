@@ -130,6 +130,8 @@ class Roulette:
             "money": money,
         }
 
+        self.results.append(result)
+
         data = {
             "roll": roll,
             "type": type,
@@ -142,7 +144,6 @@ class Roulette:
             "total_money": self.total_money,
         }
 
-        self.results.append(result)
         self.results_df = self.results_df.append(data, ignore_index=True)
 
         return result
